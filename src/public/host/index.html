@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gyrocade PoC</title>
+    <link rel="stylesheet" href="/host/host.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/vendor/three/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module" src="/host/host.js"></script>
+  </head>
+  <body>
+    <div id="stage" class="stage"></div>
+    <div class="info">
+      <h1 class="logo">GYRO<span>CADE</span> <small>proof of concept</small></h1>
+      <p>Open on your phone: <strong id="play-url">…</strong></p>
+      <p id="players" class="players">No phone connected yet</p>
+    </div>
+    <div id="banner" class="banner">Connecting to server…</div>
+  </body>
+</html>
