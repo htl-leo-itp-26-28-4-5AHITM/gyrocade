@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#07051a" />
+    <title>Gyrocade Controller</title>
+    <link rel="stylesheet" href="/shared/theme.css" />
+    <link rel="stylesheet" href="/controller/controller.css" />
+    <script type="module" src="/controller/controller.js"></script>
+  </head>
+  <body>
+    <main id="join-screen" class="screen">
+      <div id="lang-switch" class="lang-switch" role="group" aria-label="Language / Sprache">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="de">DE</button>
+      </div>
+      <h1 class="logo">GYRO<span>CADE</span></h1>
+      <form id="join-form">
+        <label for="name" data-i18n="ctrl.name">Your name</label>
+        <input id="name" maxlength="16" autocomplete="nickname" placeholder="Player" data-i18n-placeholder="ctrl.namePlaceholder" enterkeyhint="go" />
+        <button type="submit" data-i18n="ctrl.play">Play</button>
+      </form>
+      <p id="join-error" class="error" hidden></p>
+    </main>
+
+    <main id="play-screen" class="screen" hidden>
+      <header>
+        <span id="player-name" class="player-name"></span>
+        <span id="status" class="status"></span>
+      </header>
+      <div id="pad" class="pad">
+        <div class="pad-cross"></div>
+        <div id="dot" class="dot" aria-hidden="true"></div>
+      </div>
+      <div class="info">
+        <p id="phase-hint" class="phase-hint"></p>
+        <p id="motion-hint" class="hint" data-i18n="ctrl.tilt">Tilt your device to move.</p>
+      </div>
+      <div class="actions">
+        <button id="ready" class="ready-button" type="button" aria-pressed="false" hidden></button>
+        <button id="dash" class="dash-button" type="button" data-i18n="ctrl.dash" hidden>Dash</button>
+        <button id="calibrate" type="button" data-i18n="ctrl.recalibrate">Recalibrate</button>
+      </div>
+
+      <section id="vote" class="vote" hidden>
+        <h2 data-i18n="ctrl.voteTitle">Which game next?</h2>
+        <div id="vote-options" class="vote-options"></div>
+        <p id="vote-status" class="vote-status"></p>
+      </section>
+
+      <div class="rotate-hint" data-i18n="ctrl.turn">Turn your device sideways</div>
+    </main>
+  </body>
+</html>

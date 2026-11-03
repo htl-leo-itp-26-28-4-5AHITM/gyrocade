@@ -1,0 +1,40 @@
+# Local-only project notes
+src/README.md
+
+# Dependencies
+node_modules/
+
+# Local TLS certificates (generated per machine, contain private keys and local IPs)
+certs/
+*.pem
+*.key
+*.crt
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output / caches
+dist/
+build/
+coverage/
+.cache/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

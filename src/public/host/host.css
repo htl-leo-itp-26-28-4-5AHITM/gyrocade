@@ -1,0 +1,1134 @@
+/* Host screen (projector). Fonts and color roles come from /shared/theme.css.
+   Bungee only for display moments (logo, overlay titles, countdowns, announcements, places);
+   everything else is Barlow Semi Condensed. Player colors appear only on player things
+   (balls, avatars, name tags, standings), never as decoration. */
+
+:root {
+  --panel: rgba(9, 6, 26, 0.94);
+  --panel-edge: linear-gradient(var(--cyan), var(--magenta));
+  --lobby-width: 400px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--night);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-weight: 500;
+}
+
+body {
+  display: flex;
+}
+
+button {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.stage canvas,
+.stage .labels {
+  position: absolute;
+  inset: 0;
+}
+
+/* CSS2DRenderer gives every label a z-index; keep them in their own layer below the HUD */
+.labels {
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Name tag above each ball: dark chip, player-colored edge and text */
+.name-tag {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1px 10px 2px;
+  border-radius: 6px;
+  background: rgba(7, 5, 26, 0.78);
+  border: 1.5px solid currentColor;
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.name-tag .rank {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.name-tag .rank:empty {
+  display: none;
+}
+
+/* Player avatar: the ball from the big screen, flat. White badge with the initial. */
+.avatar {
+  --size: 36px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%, #fff 0 40%, transparent 42%),
+    radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--color) 55%, #fff) 0, var(--color) 45%, color-mix(in srgb, var(--color) 60%, #000) 100%);
+  color: color-mix(in srgb, var(--color) 30%, #0c0820);
+  font-family: var(--font-display);
+  font-size: calc(var(--size) * 0.38);
+  line-height: 1;
+  padding-top: calc(var(--size) * 0.04); /* Bungee sits high: optical centre */
+}
+
+/* --- Lobby panel ----------------------------------------------------------------
+   Order: join (how to get in) → players (who's in, what happens next). Fits a 900 px tall
+   screen with 8 players; shorter screens drop the join steps first. */
+
+.lobby {
+  position: relative;
+  width: var(--lobby-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  background: var(--panel);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+/* the marquee edge: one gradient line between stage and panel */
+.lobby::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--panel-edge);
+  opacity: 0.8;
+}
+
+.lobby[hidden] {
+  display: none;
+}
+
+.lobby-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--cyan);
+  text-shadow: 0 0 18px rgba(0, 240, 255, 0.55);
+}
+
+.logo span {
+  color: var(--magenta);
+  text-shadow: 0 0 18px rgba(255, 43, 214, 0.55);
+}
+
+.lang-switch {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lang-switch button {
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang-switch button[aria-pressed='true'] {
+  background: var(--cyan);
+  color: var(--night);
+}
+
+/* Join: QR, address, Wi-Fi, steps */
+.join-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 16px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.09), rgba(0, 240, 255, 0.02));
+  box-shadow: inset 0 0 0 1px rgba(0, 240, 255, 0.3);
+}
+
+.join-title {
+  align-self: stretch;
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* the SVG inside gets an exact pixel size from host.js (fitQr) */
+.qr {
+  padding: 8px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.qr svg {
+  display: block;
+}
+
+.or {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.join-url {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--cyan);
+  word-break: break-all;
+  text-align: center;
+}
+
+.wifi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.wifi svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.wifi circle {
+  fill: var(--cyan);
+  stroke: none;
+}
+
+/* online mode (npm run online): a public hostname instead of ip:port, a globe instead of Wi-Fi */
+.wifi .icon-globe,
+.join-card.online .wifi .icon-wifi {
+  display: none;
+}
+
+.join-card.online .wifi .icon-globe {
+  display: block;
+}
+
+.wifi .icon-globe .ring {
+  fill: none;
+  stroke: var(--cyan);
+}
+
+.join-url.long {
+  font-size: 19px;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.join-card.online .join-url {
+  cursor: copy;
+}
+
+.join-card.online .join-url:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* a real sequence, so it is numbered */
+.steps {
+  counter-reset: step;
+  list-style: none;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(0, 240, 255, 0.18);
+}
+
+.steps li {
+  counter-increment: step;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.steps li::before {
+  content: counter(step);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cyan);
+  color: var(--night);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Players: heading, what happens next, 8 slots */
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.players-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.players-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.player-count {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ready-count {
+  margin-left: auto;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--go);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the one thing the room has to do next */
+.lobby-status {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 178, 46, 0.1);
+  border-left: 4px solid var(--amber);
+  color: var(--fg);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.lobby-status.counting {
+  background: rgba(57, 255, 20, 0.12);
+  border-left-color: var(--go);
+  color: var(--go);
+}
+
+.slots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 54px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--night-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition:
+    opacity 0.2s,
+    box-shadow 0.2s;
+}
+
+.slot.empty {
+  justify-content: center;
+  background: none;
+  box-shadow: inset 0 0 0 1px rgba(43, 36, 82, 0.6);
+  color: #4d4778;
+  font-size: 15px;
+}
+
+.slot-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.slot-name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slot-state {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.slot.ready {
+  box-shadow:
+    inset 0 0 0 2px var(--go),
+    0 0 16px rgba(57, 255, 20, 0.2);
+}
+
+.slot.ready .slot-state {
+  color: var(--go);
+  font-weight: 700;
+}
+
+.slot.offline {
+  opacity: 0.45;
+}
+
+.slot.offline .slot-state {
+  color: var(--amber);
+}
+
+/* join animation: the slot pops in with a flash in the player's color */
+.slot.joined {
+  animation: slot-join 0.7s ease-out;
+}
+
+@keyframes slot-join {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.05);
+    opacity: 1;
+    box-shadow: 0 0 32px var(--color);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.keys {
+  margin: auto 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: var(--font-display); /* Barlow's Q reads as 0 this small */
+  font-size: 0.85em;
+  font-weight: 400;
+  text-align: center;
+  color: var(--fg);
+}
+
+/* the steps go first when space runs out: once players are in, or on short screens */
+.lobby.crowded .steps {
+  display: none;
+}
+
+@media (max-height: 860px) {
+  .steps {
+    display: none;
+  }
+}
+
+@media (max-height: 800px) {
+  .lobby {
+    gap: 12px;
+    padding-top: 16px;
+  }
+  /* the key hints are for whoever runs the laptop; the room needs the QR and the slots */
+  .keys {
+    display: none;
+  }
+  .join-card {
+    padding: 12px 14px;
+  }
+  .join-title {
+    margin-bottom: 2px;
+    font-size: 20px;
+  }
+  .join-url {
+    font-size: 28px;
+  }
+  .slot {
+    height: 46px;
+  }
+  .slot .avatar {
+    --size: 30px;
+  }
+}
+
+/* --- Empty lobby: one line for the room -------------------------------------------- */
+
+.stage-hint {
+  position: absolute;
+  top: 9%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0 24px;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 2.6vw, 44px);
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--fg);
+  text-shadow: 0 0 22px rgba(0, 240, 255, 0.55);
+  pointer-events: none;
+  animation: hint-breathe 3.2s ease-in-out infinite;
+}
+
+.stage-hint[hidden] {
+  display: none;
+}
+
+@keyframes hint-breathe {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-hint {
+    animation: none;
+  }
+}
+
+/* --- QR overlay (Q) ------------------------------------------------------------------ */
+
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(7, 5, 26, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.qr-overlay[hidden] {
+  display: none;
+}
+
+.qr-overlay-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.qr-overlay .qr {
+  padding: 16px;
+  border-radius: 20px;
+}
+
+.qr-overlay .join-url {
+  font-size: 56px;
+}
+
+.qr-overlay .join-url.long {
+  font-size: 34px;
+}
+
+/* --- Stage overlays: countdown and vote ------------------------------------------- */
+
+.stage-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, rgba(7, 5, 26, 0.6), rgba(7, 5, 26, 0.9));
+}
+
+.stage-overlay[hidden] {
+  display: none;
+}
+
+.overlay-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 54px;
+  line-height: 1.05;
+  color: #fff;
+  text-shadow: 0 0 28px rgba(255, 43, 214, 0.8);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.overlay-sub {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ring {
+  position: relative;
+  width: 220px;
+  aspect-ratio: 1;
+}
+
+.ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-track,
+.ring-progress {
+  fill: none;
+  stroke-width: 7;
+}
+
+.ring-track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+.ring-progress {
+  stroke: var(--go);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  filter: drop-shadow(0 0 6px var(--go));
+}
+
+.ring-number {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 104px;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 0 24px rgba(57, 255, 20, 0.8);
+}
+
+.ring-small {
+  width: 88px;
+}
+
+.ring-small .ring-number {
+  font-size: 34px;
+}
+
+.vote-head {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.vote-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px;
+}
+
+/* a game cartridge: art on top, a dark label underneath */
+.vote-card {
+  width: 330px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 2px var(--line);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    opacity 0.2s;
+}
+
+.vote-card .game-art {
+  display: block;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(#02020c, #3b0c55);
+}
+
+.vote-card .game-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.vote-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+}
+
+.vote-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.vote-description {
+  flex: 1; /* the vote bars of all cards line up */
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.vote-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.vote-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+  transition: width 0.3s ease-out;
+}
+
+.vote-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+
+.vote-count {
+  margin-right: auto;
+  font-size: 17px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.vote-meta .avatar {
+  --size: 28px;
+  animation: slot-join 0.4s ease-out;
+}
+
+/* roulette: the spotlight jumps between the tied cards, the winner lights up green */
+.vote-card.spotlight {
+  box-shadow:
+    inset 0 0 0 3px var(--magenta),
+    0 0 36px rgba(255, 43, 214, 0.5);
+  transform: translateY(-6px);
+}
+
+.vote-card.winner {
+  box-shadow:
+    inset 0 0 0 3px var(--go),
+    0 0 48px rgba(57, 255, 20, 0.55);
+  transform: scale(1.06);
+}
+
+.vote-card.loser {
+  opacity: 0.3;
+}
+
+/* --- Game HUDs (race and Knockout Arena share these) -------------------------------- */
+
+.race-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.race-timer {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  min-width: 7ch; /* fixed width: the digits never shift the layout */
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--fg);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Standings / scores: a column of strips, each with the player's ball and a colored edge */
+.race-standings,
+.race-results ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.race-standings {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  width: 260px;
+}
+
+.race-standings li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  padding: 0 12px 0 0;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(7, 5, 26, 0.85), rgba(7, 5, 26, 0.6));
+  border-left: 4px solid var(--color);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.race-standings .pos,
+.race-results .pos {
+  width: 2.6em;
+  font-family: var(--font-display);
+  font-size: 14px;
+  text-align: center;
+  color: var(--fg);
+}
+
+.race-standings li:first-child .pos {
+  color: var(--amber);
+}
+
+.race-standings .avatar {
+  --size: 24px;
+}
+
+.race-results .avatar {
+  --size: 30px;
+}
+
+.race-standings .name,
+.race-results .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.race-standings .time,
+.race-results .time {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.race-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.race-announce {
+  --glow: var(--magenta);
+  max-width: 80%;
+  font-family: var(--font-display);
+  font-size: 150px;
+  line-height: 1;
+  text-align: center;
+  color: #fff;
+  text-shadow:
+    0 0 24px var(--glow),
+    0 0 64px var(--glow);
+  animation: announce 1s ease-out forwards;
+}
+
+.race-announce.small {
+  font-size: 52px;
+  animation-duration: 2.5s;
+}
+
+.race-announce.go {
+  --glow: var(--go);
+  font-size: 190px;
+}
+
+@keyframes announce {
+  0% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  15% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .race-announce,
+  .slot.joined,
+  .vote-meta .avatar,
+  .ko-feed li {
+    animation-name: fade;
+  }
+  @keyframes fade {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.999;
+    }
+  }
+}
+
+.race-progress {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 30px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* checkered flag at the end of the bar */
+.race-progress::after {
+  content: '';
+  position: absolute;
+  right: -9px;
+  top: -10px;
+  width: 18px;
+  height: 24px;
+  border-radius: 2px;
+  background: repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 9px 9px;
+}
+
+.race-progress .dot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  margin: -8px;
+  border-radius: 50%;
+  background: var(--color);
+  box-shadow:
+    0 0 0 2px var(--night),
+    0 0 10px var(--color);
+}
+
+/* Results: a centred board, title in the display face */
+.race-results {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 420px;
+  max-width: min(560px, 90%);
+  padding: 26px 30px 22px;
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.race-results[hidden] {
+  display: none;
+}
+
+.race-results h2 {
+  margin: 0 0 18px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.1;
+  color: var(--magenta);
+  text-shadow: 0 0 16px rgba(255, 43, 214, 0.5);
+}
+
+.race-results ol {
+  gap: 6px;
+}
+
+.race-results li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding-right: 14px;
+  border-radius: 8px;
+  background: var(--night-2);
+  border-left: 5px solid var(--color);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.race-results li:first-child {
+  background: linear-gradient(90deg, rgba(255, 178, 46, 0.18), var(--night-2) 70%);
+}
+
+.race-results li:first-child .pos {
+  color: var(--amber);
+}
+
+/* fixed, right-aligned columns: gains and totals line up from row to row */
+.race-results .gain {
+  width: 2.4em;
+  text-align: right;
+  color: var(--go);
+  font-weight: 800;
+}
+
+.race-results .time {
+  min-width: 4.4em;
+  text-align: right;
+}
+
+.race-results h2 {
+  text-wrap: balance;
+}
+
+.race-results .keys {
+  margin-top: 16px;
+  font-size: 16px;
+}
+
+.race-results .keys[hidden] {
+  display: none;
+}
+
+/* --- Knockout Arena HUD (on top of the shared HUD styles) ----------------------- */
+
+.ko-round {
+  position: absolute;
+  top: 18px;
+  left: 24px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--fg);
+  text-shadow: 0 0 16px rgba(255, 43, 214, 0.7);
+}
+
+.race-standings li.out {
+  opacity: 0.4;
+}
+
+.ko-feed {
+  position: absolute;
+  left: 24px;
+  bottom: 26px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ko-feed li {
+  padding: 7px 14px;
+  border-left: 4px solid var(--color);
+  border-radius: 6px;
+  background: rgba(7, 5, 26, 0.82);
+  font-size: 21px;
+  font-weight: 700;
+  animation: ko-feed 4s ease-out forwards;
+}
+
+@keyframes ko-feed {
+  0% {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  8%,
+  80% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 30;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: var(--amber);
+  color: var(--night);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.banner[hidden] {
+  display: none;
+}
