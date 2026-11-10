@@ -14,7 +14,7 @@ const RECONNECT_MS = 1000;
 const $ = (id) => document.getElementById(id);
 const stage = $('stage');
 
-// --- Scene --------------------------------------------------------------------
+// --- Scene ---------------------------------------------------
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
